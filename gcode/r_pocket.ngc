@@ -1,0 +1,111 @@
+(#1 = width, #2 = height, #3 = depth, #4 = feed)
+O<r_pocket> sub
+	
+	#<last_x> = #<_x>
+	#<last_y> = #<_y>
+	#<last_z> = #<_z>
+	#<depth> = #3
+	#<cur_depth> = 0
+	#<tool_dia> = #5410
+	#<tool_rad> = [#<tool_dia> / 2]
+	#<doc> = [#<tool_dia> * .5]
+	#<pass> = 0
+	#<width> = [#1 - #<tool_dia>]
+	#<height> = [#2 - #<tool_dia>]
+
+	o301 if [#<width> GT #<height>]
+		#<limit> = #<height>
+		#<extra> = [#<width> - #<height>]
+	o301 else
+		#<limit> = #<width>
+		#<extra> = [#<height> - #<width>]
+	o301 endif
+
+	#<passes> = [fix[#<limit> / #<doc>] + 1]
+	#<limit_x> = [#<width> / 2]
+	#<limit_y> = [#<height> / 2]
+	#<cur_y> = 0
+	#<cur_x> = 0
+
+	(print,Tool dia. is: #<tool_dia>)
+
+	(FEED TO Z0)
+	G01 Z0 F[#4/2]
+	 	
+		o200 do
+			(plunge to next z depth)
+			#<pass> = 0
+
+			#<cur_depth> = [#<cur_depth> - #<doc>]
+
+			o201 if [#<cur_depth> LT -#<depth>]
+				#<cur_depth> = -#<depth>
+			o201 endif
+
+			#<cur_y> = #<last_y>
+			#<cur_x> = #<last_x>
+
+			G00 X#<cur_x> Y#<cur_y>
+			G01 Z#<cur_depth> F[#4/2]
+
+			(mill out pocket for this z depth)
+			o100 do
+				#<index> = [#<pass> + 1]
+				#<inc_move> = [#<doc> * #<index>]
+			
+				#<match> = 0
+				#<cur_y> = [#<last_y> +  #<inc_move>]
+				#<cur_x> = [#<last_x> +  #<inc_move> + [#<extra> / 2]]
+
+				o101 if [#<cur_y> GT [#<last_y> + #<limit_y>]]
+					#<cur_y> = [#<last_y> + #<limit_y>]
+				o101 endif
+
+				o102 if [#<cur_x> GT [#<last_x> + #<limit_x>]]
+					#<cur_x> = [#<last_x> + #<limit_x>]
+				o102 endif
+
+				G01 Y#<cur_y> F[#4]
+				G01 X#<cur_x> F[#4]
+
+				#<cur_y> = [#<last_y> -  #<inc_move>]
+				#<cur_x> = [#<last_x> -  [#<inc_move> + [#<extra> / 2]]]
+
+				o103 if [#<cur_y> LT [#<last_y> - #<limit_y>]]
+					#<cur_y> = [#<last_y> - #<limit_y>]
+					#<match> = [#<match> + 1]
+				o103 endif
+
+				o104 if [#<cur_x> LT [#<last_x> - #<limit_x>]]
+					#<cur_x> = [#<last_x> - #<limit_x>]
+					#<match> = [#<match> + 1]
+				o104 endif
+
+				G01 Y[#<cur_y>] F[#4]
+				G01 X[#<cur_x>] F[#4]
+
+				#<cur_y> = [#<last_y> +  #<inc_move>]
+				#<cur_x> = [#<last_x> +  #<inc_move> + [#<extra> / 2]]
+
+				o105 if [#<cur_y> GT [#<last_y> + #<limit_y>]]
+					#<cur_y> = [#<last_y> + #<limit_y>]
+					#<match> = [#<match> + 1]
+				o105 endif
+
+				o106 if [#<cur_x> GT [#<last_x> + #<limit_x>]]
+					#<cur_x> = [#<last_x> + #<limit_x>]
+					#<match> = [#<match> + 1]
+				o106 endif
+
+				G01 Y#<cur_y> F[#4]			
+				G01 X#<last_x> F[#4]
+
+				#<pass> = [#<pass> + 1]
+			o100 while [[#<pass> LT #<passes>] AND [#<match> LT 4]]
+
+		o200 while [#<cur_depth> GT -#<depth>]
+
+	G00 Z#<last_z>
+	G00 X#<last_x> Y#<last_y>
+O<r_pocket> endsub
+M2

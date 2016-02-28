@@ -1,0 +1,63 @@
+(#1 = diameter, #2 = depth, #3 = Feed, #4 = max doc)
+O<c_pocket> sub
+	#<cur_depth> = #<_z>
+	#<cur_dia> = 0
+	#<last_x> = #<_x>
+	#<last_y> = #<_y>
+	#<last_z> = #<_z>
+	#<tool_dia> = #5410
+	#<z_step> = #<tool_dia>
+	#<x_step> = [[#<tool_dia> / 2] + .1]
+ 	#<max_dia> = [#1 - #<tool_dia>]
+	#<max_depth> = #2
+	#<count> = 0
+
+	#<loop_limit> = -[#<max_depth> + .001]
+	#<exit_loop1> = 0
+
+	o105 if [#4 GT 0]
+		#<z_step> = #4
+	o105 endif
+
+	o101 do
+		#<cur_depth> = [#<cur_depth> - #<z_step>]
+		#<cur_dia> = 0
+		
+		o102 if [#<cur_depth> LE -[#<max_depth>+.001]]
+    			#<cur_depth> = -[#<max_depth>]
+      	o102 endif
+
+		#<exit_loop2> = 0
+		
+		(PRINT, CUR DEPTH = #<CUR_DEPTH>)
+		o103 do
+			#<cur_dia> = [#<cur_dia> + #<x_step>]
+			o104 if [#<cur_dia> GE [[#<max_dia> / 2] + .001]]
+    				#<cur_dia> = [#<max_dia> / 2]
+      		o104 endif
+			(PRINT, CUR DIA = #<cur_dia>)
+
+			G01 Z#<cur_depth> F[#3/2]
+		
+			G01 X[#<last_x> + #<cur_dia>] F#3
+			G02 I[-#<cur_dia>] J0 F#3
+			
+			o1031 if [#<cur_dia> EQ [#<max_dia> / 2]]
+				#<exit_loop2> = 1
+			o1031 endif
+
+		o103 while [#<cur_dia> LT [#<max_dia> / 2]]
+
+		o1011 if [#<cur_depth> EQ -[#<max_depth>]]
+			#<exit_loop1> = 1
+		o1011 endif		
+
+		G01 X#<last_x> Y#<last_y> F#3		
+	o101 while [#<exit_loop1> EQ 0]
+
+	G01 X[[#<last_x> + #<max_dia>/2]] F#3
+	G02 I-[#<max_dia>/2] J0 F#3
+	G01 X#<last_x> Y#<last_y> F#3
+	G00 Z#<last_z>
+O<c_pocket> endsub
+M2

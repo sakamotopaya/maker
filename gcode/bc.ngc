@@ -1,0 +1,35 @@
+(#1 = diameter, #2 = # of holes, #3 = depth, #4 = 1: peck, 2: pocket, #5 = feed, #6 = pocket dia)
+O<bc> sub
+
+	#<dia> = #1
+	#<num_holes> = #2
+	#<depth> = #3
+	#<last_x> = #<_x>
+	#<last_y> = #<_y>
+	#<last_z> = #<_z>
+	#<tool_dia> = #5410
+
+	#<cur_hole> = 0
+	#<angle> = [360 / #<num_holes>]
+	o100 do
+		G00 Z1
+
+		#<cur_x> = [sin[#<angle> * [#<cur_hole> + 1]] * [#<dia>/2]]
+		#<cur_y> = [cos[#<angle> * [#<cur_hole> + 1]] * [#<dia>/2]]
+
+		G00 X#<cur_x> Y#<cur_y>
+		G01 X#<cur_x> Y#<cur_y> F#5
+
+		o101 if [#4 EQ 1]
+    			G73 X#<cur_x> Y#<cur_y> Z[-#<depth>] R#<last_z> Q[#<tool_dia>] 
+		o101 else
+			O<c_pocket> call [#6] [#3] [#5]
+      	o101 endif
+
+		#<cur_hole> = [#<cur_hole> + 1]
+
+	o100 while [#<cur_hole> LT #<num_holes>]
+	G00 Z#<last_z>
+	G00 X#<last_x> Y#<last_y>
+O<bc> endsub
+M2

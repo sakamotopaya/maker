@@ -1,0 +1,18 @@
+%
+(Testing a generic hex pocket routine)
+G21 G40 G90
+M06 T01
+M03
+M07
+G57
+G00 Z30
+G00 X[[105/4]*0]
+G00 Y[[40/2] * 0]
+G00 Z1
+
+(#1 = diameter, #2 = depth, #3 = Feed)
+O<hex_pocket> call [10.7] [6] [500] [1]
+
+G00 Z30
+M30
+%
